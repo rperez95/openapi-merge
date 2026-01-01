@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.23'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v -o openapi-merge .
+
+      - name: Test with coverage
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.out
+          flags: unittests
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: openapi-merge
+          path: openapi-merge
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage
+          path: coverage.out
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.23'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+
+  test-action:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Test OpenAPI Merge Action
+        uses: ./
+        with:
+          config: examples/merge-config.yaml
+          output: test-merged-output.json
+          verbose: 'true'
+
+      - name: Verify output file exists
+        run: |
+          if [ -f test-merged-output.json ]; then
+            echo "✅ Merged file created successfully"
+            head -50 test-merged-output.json
+          else
+            echo "❌ Merged file not found"
+            exit 1
+          fi
+
+      - name: Validate JSON output
+        run: |
+          python3 -c "import json; json.load(open('test-merged-output.json'))"
+          echo "✅ Output is valid JSON"

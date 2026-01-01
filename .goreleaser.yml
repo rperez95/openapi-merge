@@ -1,0 +1,75 @@
+# GoReleaser configuration for openapi-merge
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: openapi-merge
+    main: .
+    binary: openapi-merge
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Tag}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: rperez95
+    name: openapi-merge
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## OpenAPI Merge {{ .Version }}
+    
+    ### Installation
+    
+    **Using Go:**
+    ```bash
+    go install github.com/rperez95/openapi-merge@{{ .Tag }}
+    ```
+    
+    **Using GitHub Action:**
+    ```yaml
+    - uses: rperez95/openapi-merge@{{ .Tag }}
+      with:
+        config: merge-config.yaml
+    ```
+

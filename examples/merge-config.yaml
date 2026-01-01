@@ -1,0 +1,164 @@
+# =============================================================================
+# E-Commerce Platform API - Merge Configuration
+# =============================================================================
+# This example demonstrates merging three microservice APIs into a single
+# unified API specification for an API Gateway.
+
+# API Metadata
+info:
+  title: "E-Commerce Platform API"
+  description: |
+    # E-Commerce Platform API
+
+    Unified API specification for the E-Commerce platform, combining:
+
+    - **Users Service**: User account management and authentication
+    - **Orders Service**: Order processing, cart, and checkout
+    - **Products Service**: Product catalog and inventory
+
+    ## Authentication
+
+    All endpoints require authentication via session cookie or Bearer token.
+
+    ## Rate Limiting
+
+    API calls are rate-limited per user. Check response headers for limits.
+  version: "1.0.0"
+  contact:
+    name: "Platform Support"
+    email: "support@example.com"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+# Server Definitions
+servers:
+  - url: "https://api.example.com"
+    description: "Production"
+  - url: "https://staging-api.example.com"
+    description: "Staging"
+  - url: "http://localhost:8080"
+    description: "Local Development"
+
+# =============================================================================
+# Security Configuration
+# =============================================================================
+
+securitySchemes:
+  # Session cookie authentication
+  cookieAuth:
+    type: apiKey
+    in: cookie
+    name: session_id
+    description: Session cookie for browser clients
+
+  # Bearer token for API clients
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT Bearer token for API clients
+
+# Global security (any of these methods)
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+# =============================================================================
+# Tag Ordering
+# =============================================================================
+
+tagOrder:
+  - "Authentication"
+  - "Users"
+  - "Profile"
+  - "Products"
+  - "Categories"
+  - "Inventory"
+  - "Reviews"
+  - "Cart"
+  - "Orders"
+  - "Checkout"
+
+# =============================================================================
+# Input Files
+# =============================================================================
+
+inputs:
+  # ---------------------------------------------------------------------------
+  # Users Service
+  # ---------------------------------------------------------------------------
+  - inputFile: users-api.json
+    dispute:
+      prefix: "Users_"  # Prefix for schema collision resolution
+    pathModification:
+      stripStart: "/v1"
+      prepend: "/v1/users-service"
+    operationSelection:
+      excludeTags: []  # Include all tags
+    includeExtraParameters:
+      - name: X-Request-ID
+        in: header
+        description: "Unique request identifier for tracing"
+        required: false
+        schema:
+          type: string
+          format: uuid
+    description:
+      append: true
+      title:
+        value: "Users Service"
+        headingLevel: 2
+
+  # ---------------------------------------------------------------------------
+  # Orders Service
+  # ---------------------------------------------------------------------------
+  - inputFile: orders-api.json
+    dispute:
+      prefix: "Orders_"  # Prefix for schema collision resolution
+    pathModification:
+      stripStart: "/v1"
+      prepend: "/v1/orders-service"
+    includeExtraParameters:
+      - name: X-Request-ID
+        in: header
+        description: "Unique request identifier for tracing"
+        required: false
+        schema:
+          type: string
+          format: uuid
+    description:
+      append: true
+      title:
+        value: "Orders Service"
+        headingLevel: 2
+
+  # ---------------------------------------------------------------------------
+  # Products Service
+  # ---------------------------------------------------------------------------
+  - inputFile: products-api.json
+    dispute:
+      prefix: "Products_"  # Prefix for schema collision resolution
+    pathModification:
+      stripStart: "/v1"
+      prepend: "/v1/products-service"
+    includeExtraParameters:
+      - name: X-Request-ID
+        in: header
+        description: "Unique request identifier for tracing"
+        required: false
+        schema:
+          type: string
+          format: uuid
+    description:
+      append: true
+      title:
+        value: "Products Service"
+        headingLevel: 2
+
+# =============================================================================
+# Output
+# =============================================================================
+
+output: platform-api.json
+

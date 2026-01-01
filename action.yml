@@ -1,0 +1,80 @@
+name: 'OpenAPI Merge'
+description: 'Merge multiple OpenAPI 2.0/3.0 specifications into a single OpenAPI 3.0 file'
+author: 'rperez95'
+
+branding:
+  icon: 'git-merge'
+  color: 'blue'
+
+inputs:
+  config:
+    description: 'Path to the merge configuration file (YAML or JSON)'
+    required: true
+  output:
+    description: 'Output file path (overrides config file setting)'
+    required: false
+    default: ''
+  verbose:
+    description: 'Enable verbose output'
+    required: false
+    default: 'false'
+  version:
+    description: 'Version of openapi-merge to use (default: latest)'
+    required: false
+    default: 'latest'
+
+outputs:
+  output-file:
+    description: 'Path to the generated merged OpenAPI file'
+    value: ${{ steps.merge.outputs.output-file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.23'
+        cache: false
+
+    - name: Install openapi-merge
+      shell: bash
+      run: |
+        # Check if we're in the source repo (has go.mod with this module)
+        if [ -f "go.mod" ] && grep -q "github.com/rperez95/openapi-merge" go.mod; then
+          echo "Building from source..."
+          go build -o openapi-merge .
+          echo "$(pwd)" >> $GITHUB_PATH
+        else
+          echo "Installing from Go module registry..."
+          if [ "${{ inputs.version }}" = "latest" ]; then
+            go install github.com/rperez95/openapi-merge@latest
+          else
+            go install github.com/rperez95/openapi-merge@${{ inputs.version }}
+          fi
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        fi
+
+    - name: Run OpenAPI Merge
+      id: merge
+      shell: bash
+      run: |
+        ARGS="merge --config ${{ inputs.config }}"
+        
+        if [ -n "${{ inputs.output }}" ]; then
+          ARGS="$ARGS --output ${{ inputs.output }}"
+          echo "output-file=${{ inputs.output }}" >> $GITHUB_OUTPUT
+        else
+          # Extract output from config file
+          OUTPUT_FILE=$(grep -E '^\s*output:' ${{ inputs.config }} | head -1 | sed 's/.*output:\s*//' | tr -d '"' | tr -d "'" | xargs)
+          if [ -n "$OUTPUT_FILE" ]; then
+            echo "output-file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          fi
+        fi
+        
+        if [ "${{ inputs.verbose }}" = "true" ]; then
+          ARGS="$ARGS --verbose"
+        fi
+        
+        echo "Running: openapi-merge $ARGS"
+        openapi-merge $ARGS

@@ -1,0 +1,7 @@
+contact_links:
+  - name: Support Request
+    url: https://github.com/rperez95/openapi-merge/discussions
+    about: Ask for help, share ideas, or report bugs.
+  - name: Documentation Issues
+    url: https://github.com/rperez95/openapi-merge/issues
+    about: Report a documentation bug, or suggest an improvement.
