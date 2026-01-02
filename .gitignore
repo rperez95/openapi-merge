@@ -4,6 +4,7 @@
 
 # Binaries
 openapi-merge
+go-openapi-merge
 *.exe
 *.exe~
 *.dll
