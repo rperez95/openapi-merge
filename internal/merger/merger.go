@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi2"
@@ -110,15 +113,25 @@ func (m *Merger) Merge() error {
 }
 
 // loadSpec loads and parses an OpenAPI specification, converting OAS2 to OAS3 if needed.
+// Supports both local files and HTTP/HTTPS URLs.
 func (m *Merger) loadSpec(filePath string) (*openapi3.T, error) {
-	data, err := os.ReadFile(filePath)
+	var data []byte
+	var err error
+	var ext string
+
+	if config.IsURL(filePath) {
+		data, ext, err = m.fetchFromURL(filePath)
+	} else {
+		data, err = os.ReadFile(filePath)
+		ext = strings.ToLower(filepath.Ext(filePath))
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	// Detect if it's Swagger 2.0 or OpenAPI 3.x
 	var raw map[string]interface{}
-	ext := strings.ToLower(filepath.Ext(filePath))
 
 	if ext == ".yaml" || ext == ".yml" {
 		if err := yaml.Unmarshal(data, &raw); err != nil {
@@ -155,6 +168,90 @@ func (m *Merger) loadSpec(filePath string) (*openapi3.T, error) {
 	}
 
 	return spec, nil
+}
+
+// fetchFromURL fetches data from an HTTP/HTTPS URL.
+// Automatically converts GitHub blob URLs to raw URLs.
+// Uses GITHUB_TOKEN environment variable for authentication with GitHub URLs.
+func (m *Merger) fetchFromURL(url string) ([]byte, string, error) {
+	// Convert GitHub blob URLs to raw URLs
+	url = convertGitHubURL(url)
+
+	if m.verbose {
+		fmt.Printf("  Fetching from URL: %s\n", url)
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add GitHub token authentication if available and URL is GitHub
+	if isGitHubURL(url) {
+		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+			req.Header.Set("Authorization", "token "+token)
+			if m.verbose {
+				fmt.Printf("  Using GITHUB_TOKEN for authentication\n")
+			}
+		}
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to fetch URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("HTTP request failed with status %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Determine extension from URL
+	ext := strings.ToLower(filepath.Ext(url))
+	// Handle URLs with query params
+	if idx := strings.Index(ext, "?"); idx != -1 {
+		ext = ext[:idx]
+	}
+
+	return data, ext, nil
+}
+
+// isGitHubURL checks if a URL is a GitHub URL that can use token auth.
+func isGitHubURL(url string) bool {
+	return strings.Contains(url, "github.com") ||
+		strings.Contains(url, "githubusercontent.com") ||
+		strings.Contains(url, "github.io")
+}
+
+// convertGitHubURL converts GitHub blob/tree URLs to raw.githubusercontent.com URLs.
+// Example: https://github.com/owner/repo/blob/branch/path/file.json
+//       -> https://raw.githubusercontent.com/owner/repo/branch/path/file.json
+func convertGitHubURL(url string) string {
+	// Match GitHub blob URLs
+	githubBlobRegex := regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/blob/(.+)$`)
+	if matches := githubBlobRegex.FindStringSubmatch(url); matches != nil {
+		owner := matches[1]
+		repo := matches[2]
+		pathWithBranch := matches[3]
+		return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", owner, repo, pathWithBranch)
+	}
+
+	// Match GitHub tree URLs (for directories, though usually not used for single files)
+	githubTreeRegex := regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/tree/(.+)$`)
+	if matches := githubTreeRegex.FindStringSubmatch(url); matches != nil {
+		owner := matches[1]
+		repo := matches[2]
+		pathWithBranch := matches[3]
+		return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", owner, repo, pathWithBranch)
+	}
+
+	return url
 }
 
 // convertSwagger2ToOpenAPI3 converts a Swagger 2.0 spec to OpenAPI 3.0.

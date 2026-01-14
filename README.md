@@ -14,6 +14,8 @@ This tool is a Go implementation inspired by [robertmassaioli/openapi-merge](htt
 
 - 🔀 Merge multiple OpenAPI specs (Swagger 2.0 & OpenAPI 3.x)
 - 🔄 Auto-convert Swagger 2.0 to OpenAPI 3.0
+- 🌐 Fetch specs from remote URLs (HTTP/HTTPS)
+- 🔑 GitHub private repo support via `GITHUB_TOKEN`
 - 🛣️ Path modification (strip/prepend prefixes)
 - 🏷️ Filter operations by tags, paths, or methods
 - 🔐 Full OAS3 security scheme support
