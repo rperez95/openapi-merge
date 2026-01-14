@@ -201,7 +201,7 @@ func (m *Merger) fetchFromURL(url string) ([]byte, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to fetch URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, "", fmt.Errorf("HTTP request failed with status %d: %s", resp.StatusCode, resp.Status)
@@ -231,7 +231,8 @@ func isGitHubURL(url string) bool {
 
 // convertGitHubURL converts GitHub blob/tree URLs to raw.githubusercontent.com URLs.
 // Example: https://github.com/owner/repo/blob/branch/path/file.json
-//       -> https://raw.githubusercontent.com/owner/repo/branch/path/file.json
+//
+//	-> https://raw.githubusercontent.com/owner/repo/branch/path/file.json
 func convertGitHubURL(url string) string {
 	// Match GitHub blob URLs
 	githubBlobRegex := regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/blob/(.+)$`)
