@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/mitchellh/mapstructure"
@@ -241,9 +242,19 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// IsURL checks if a path is an HTTP/HTTPS URL.
+func IsURL(path string) bool {
+	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
+}
+
 // ResolveRelativePaths resolves relative paths based on the config directory.
+// URLs (http:// or https://) are left unchanged.
 func (c *Config) ResolveRelativePaths(configDir string) {
 	for i := range c.Inputs {
+		// Skip URLs - they don't need path resolution
+		if IsURL(c.Inputs[i].InputFile) {
+			continue
+		}
 		if !filepath.IsAbs(c.Inputs[i].InputFile) {
 			c.Inputs[i].InputFile = filepath.Join(configDir, c.Inputs[i].InputFile)
 		}

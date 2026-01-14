@@ -54,7 +54,7 @@ inputs:
 
 ## File Path Resolution
 
-Paths can be absolute or relative to the config file:
+Paths can be absolute, relative to the config file, or remote URLs:
 
 ```yaml
 inputs:
@@ -63,7 +63,72 @@ inputs:
   
   # Absolute path
   - inputFile: /opt/apis/orders.json
+  
+  # Remote URL
+  - inputFile: https://api.example.com/openapi.json
 ```
+
+## Remote Files (URLs)
+
+The tool supports fetching OpenAPI specs from remote HTTP/HTTPS URLs:
+
+```yaml
+inputs:
+  # Direct URL to a spec file
+  - inputFile: https://petstore.swagger.io/v2/swagger.json
+    dispute:
+      prefix: "PetStore_"
+    pathModification:
+      prepend: "/petstore"
+```
+
+### GitHub Repository URLs
+
+GitHub URLs are automatically converted from web URLs to raw content URLs:
+
+```yaml
+inputs:
+  # GitHub blob URL (automatically converted to raw URL)
+  - inputFile: https://github.com/owner/repo/blob/main/docs/openapi.json
+    dispute:
+      prefix: "Service_"
+```
+
+The tool converts:
+```
+https://github.com/owner/repo/blob/branch/path/file.json
+→ https://raw.githubusercontent.com/owner/repo/branch/path/file.json
+```
+
+### Private Repository Authentication
+
+For private GitHub repositories, set the `GITHUB_TOKEN` environment variable:
+
+```bash
+# Set the token
+export GITHUB_TOKEN="ghp_your_personal_access_token"
+
+# Run the merge
+openapi-merge merge --config config.yaml -o output.json
+```
+
+Or inline:
+
+```bash
+GITHUB_TOKEN="ghp_xxxx" openapi-merge merge --config config.yaml
+```
+
+!!! tip "Creating a GitHub Token"
+    1. Go to GitHub → Settings → Developer settings → Personal access tokens
+    2. Generate a new token (classic) with `repo` scope for private repositories
+    3. The token is used automatically for any GitHub URLs
+
+!!! info "Verbose Mode"
+    Use `-v` or `--verbose` to see when authentication is being used:
+    ```bash
+    openapi-merge merge --config config.yaml -v
+    ```
+    Output will show: `Using GITHUB_TOKEN for authentication`
 
 ## Swagger 2.0 Support
 

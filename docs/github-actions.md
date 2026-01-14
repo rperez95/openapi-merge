@@ -395,6 +395,36 @@ Error: failed to load apis/service.json: no such file or directory
 !!! tip "Solution"
     Input file paths in the config are relative to the config file location. Verify paths are correct after checkout.
 
+### Fetching from private repositories
+
+The tool supports fetching OpenAPI specs from remote URLs, including private GitHub repositories. Pass the `GITHUB_TOKEN` environment variable to authenticate:
+
+```yaml
+- name: Merge OpenAPI specifications
+  uses: rperez95/openapi-merge@v0
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    config: merge-config.yaml
+    output: api.json
+```
+
+Your config can then reference GitHub URLs directly:
+
+```yaml
+inputs:
+  - inputFile: https://github.com/your-org/private-repo/blob/main/openapi.json
+    dispute:
+      prefix: "Service_"
+```
+
+!!! note "Cross-repository access"
+    The default `GITHUB_TOKEN` only has access to the current repository. For private repos in other repositories, use a Personal Access Token (PAT) with `repo` scope stored as a repository secret:
+    ```yaml
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT_WITH_REPO_ACCESS }}
+    ```
+
 ### Using output in subsequent steps
 
 Access the merged file path in later steps:
