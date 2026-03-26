@@ -117,7 +117,7 @@ openapi-merge merge --config merge-config.yaml
 === "GitHub Action"
 
     ```yaml
-    - uses: rperez95/openapi-merge@v0
+    - uses: rperez95/openapi-merge@v1
       with:
         config: merge-config.yaml
     ```
