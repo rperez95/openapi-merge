@@ -27,7 +27,7 @@ This tool is a Go implementation inspired by [robertmassaioli/openapi-merge](htt
 ### GitHub Action
 
 ```yaml
-- uses: rperez95/openapi-merge@v0
+- uses: rperez95/openapi-merge@v1
   with:
     config: examples/merge-config.yaml
     output: examples/platform-api.json

@@ -12,7 +12,7 @@
 For CI/CD pipelines, use the official GitHub Action:
 
 ```yaml
-- uses: rperez95/openapi-merge@v0
+- uses: rperez95/openapi-merge@v1
   with:
     config: merge-config.yaml
 ```

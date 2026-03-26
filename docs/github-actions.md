@@ -8,7 +8,7 @@ Add this step to your workflow:
 
 ```yaml
 - name: Merge OpenAPI specs
-  uses: rperez95/openapi-merge@v0
+  uses: rperez95/openapi-merge@v1
   with:
     config: merge-config.yaml
 ```
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge OpenAPI specifications
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
 ```
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge OpenAPI specifications
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
           output: dist/api-spec.json
@@ -110,7 +110,7 @@ jobs:
 
       - name: Merge OpenAPI specifications
         id: merge
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
           output: merged-api.json
@@ -143,7 +143,7 @@ jobs:
 
       - name: Merge OpenAPI specifications
         id: merge
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: docs/merge-config.yaml
           output: docs/openapi.json
@@ -187,7 +187,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge OpenAPI specifications
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: config/merge-${{ matrix.env }}.yaml
           output: dist/api-${{ matrix.env }}.json
@@ -206,7 +206,7 @@ For reproducible builds, pin to a specific version:
 
 ```yaml
 - name: Merge OpenAPI specifications
-  uses: rperez95/openapi-merge@v0
+  uses: rperez95/openapi-merge@v1
   with:
     config: merge-config.yaml
     version: 'v1.0.0'  # Pin to specific version
@@ -234,7 +234,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge OpenAPI specifications
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
           output: openapi.json
@@ -267,7 +267,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Merge OpenAPI specifications
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
           output: api-spec.json
@@ -303,7 +303,7 @@ jobs:
 
       - name: Merge OpenAPI specifications
         id: merge
-        uses: rperez95/openapi-merge@v0
+        uses: rperez95/openapi-merge@v1
         with:
           config: merge-config.yaml
           output: dist/openapi.json
@@ -380,7 +380,7 @@ Error: failed to write output file: permission denied
     The output directory must exist. Create it in a previous step:
     ```yaml
     - run: mkdir -p dist
-    - uses: rperez95/openapi-merge@v0
+    - uses: rperez95/openapi-merge@v1
       with:
         config: merge-config.yaml
         output: dist/api.json
@@ -401,7 +401,7 @@ The tool supports fetching OpenAPI specs from remote URLs, including private Git
 
 ```yaml
 - name: Merge OpenAPI specifications
-  uses: rperez95/openapi-merge@v0
+  uses: rperez95/openapi-merge@v1
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
@@ -432,7 +432,7 @@ Access the merged file path in later steps:
 ```yaml
 - name: Merge specs
   id: merge
-  uses: rperez95/openapi-merge@v0
+  uses: rperez95/openapi-merge@v1
   with:
     config: merge-config.yaml
     output: api.json
